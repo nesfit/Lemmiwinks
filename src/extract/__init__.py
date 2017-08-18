@@ -1,0 +1,1 @@
+from extract.page import Page
