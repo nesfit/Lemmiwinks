@@ -1,2 +1,2 @@
 # WPD
-Chubacabra: Webpage Downloader
+Lemmiwinks: Web Crawler
