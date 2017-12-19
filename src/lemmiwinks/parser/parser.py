@@ -37,14 +37,11 @@ class TinyCSSParser(abstract.CSSParser):
         if self.__is_import(rule):
             self.__process_import(rule)
         elif self.__is_url_token(rule):
-            self._logger.info(rule)
             self.__process_url_token(rule)
         # declaration rule can be found in HTML style attribute
         elif self.__is_declaration(rule):
             self.__process_declaration(rule)
         else:
-            if isinstance(rule, URLToken):
-                self._logger.info(rule)
             self.__search_tokens_in(rule)
 
     def __is_import(self, rule):
