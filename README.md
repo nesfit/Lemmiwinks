@@ -1,7 +1,10 @@
 # Lemmiwinks
 Lemmiwinks: Web Crawler
 
-In master branch is currently not working version of Lemmiwings. 
+<img src="https://vignette.wikia.nocookie.net/southpark/images/b/b8/Lemmiwinks_%282%29.png/revision/latest?cb=20161218172346" width=110 height=150>
+
+
+In master branch is currently not working version of Lemmiwings.
 
 The old-state branch consists of old WPD scrip.
 
@@ -25,3 +28,7 @@ $ docker run -d -p 4444:4444 selenium/standalone-firefox:3.8.1-bohrium
 [tinycss2](http://tinycss2.readthedocs.io/en/latest/)
 
 [css syntax level 3](https://drafts.csswg.org/css-syntax-3/)
+
+[Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/)
+
+[Mozila Archive Format](http://maf.mozdev.org/maff-file-format.html/)
