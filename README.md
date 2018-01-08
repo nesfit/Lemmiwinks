@@ -6,6 +6,8 @@ Lemmiwinks: Web Crawler
 
 In master branch is currently not working version of Lemmiwings.
 
+The dev branch is used to push broken code, which is under development.
+
 The old-state branch consists of old WPD scrip.
 
 ## Docker Configuration
