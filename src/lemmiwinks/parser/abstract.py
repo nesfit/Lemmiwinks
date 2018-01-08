@@ -20,3 +20,17 @@ class CSSParser(metaclass=abc.ABCMeta):
     @property
     def import_tokens(self):
         return self._import_token_list
+
+
+class HTMLParser(metaclass=abc.ABCMeta):
+    def __init__(self, logger_name):
+        self._logger = logging.getLogger(logger_name)
+        self._elements = list()
+
+    @abc.abstractmethod
+    def find_elements(self, tag, attribute):
+        pass
+
+    @abc.abstractmethod
+    def get_elements(self):
+        pass
