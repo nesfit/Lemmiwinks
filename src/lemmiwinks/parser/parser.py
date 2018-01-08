@@ -1,6 +1,5 @@
-# third party imports
-import tinycss2
-from tinycss2.ast import URLToken, StringToken
+#third party imports
+import bs4
 # local imports
 from . import abstract
 from . import exception
@@ -23,7 +22,7 @@ class TinyCSSParser(abstract.CSSParser):
             for rule in rule.content:
                 self.__process_rule(rule)
         except TypeError:
-            # Some object can't be iterable for example <AtRule @import … { … }>
+            # Some object are not iterable for example <AtRule @import … { … }>
             self.__process_rule(rule)
         except AttributeError:
             # The exception is raised during the parsing when
@@ -72,10 +71,21 @@ class TinyCSSParser(abstract.CSSParser):
         # In this case, URL starts with "data:image" prefix.
         return token.value.lower().startswith("data:image") is False
 
-
     def __is_declaration(self, rule):
         return rule.type == "declaration"
 
     def __process_declaration(self, rule):
         for component_value in rule.value:
             self.__search_tokens_in(component_value)
+
+
+class BsHTMLParser(abstract.HTMLParser):
+    def __init__(self):
+        logger_name = "{}.{}".format(__name__, __class__.__name__)
+        super().__init__(logger_name)
+
+    def find_elements(self, tag, attribute=None):
+        pass
+
+    def get_elements(self):
+        pass

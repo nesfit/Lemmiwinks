@@ -1,0 +1,6 @@
+Jinja2==2.10
+tinycss2==0.6.1
+aiohttp==2.3.7
+aiofiles==0.3.2
+selenium==3.8.1
+dependency-injector==3.9.1
