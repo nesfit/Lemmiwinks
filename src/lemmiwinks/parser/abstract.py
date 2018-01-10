@@ -25,12 +25,74 @@ class CSSParser(metaclass=abc.ABCMeta):
 class HTMLParser(metaclass=abc.ABCMeta):
     def __init__(self, logger_name):
         self._logger = logging.getLogger(logger_name)
-        self._elements = list()
 
     @abc.abstractmethod
     def find_elements(self, tag, attribute):
         pass
 
+    @property
     @abc.abstractmethod
-    def get_elements(self):
+    def title(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def base_href(self):
+        pass
+
+    @base_href.setter
+    @abc.abstractmethod
+    def base_href(self, url):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def charset(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def text(self):
+        pass
+
+    @abc.abstractmethod
+    def export(self):
+        pass
+
+
+class Token(metaclass=abc.ABCMeta):
+    def __init__(self, token):
+        self._token = token
+
+    @abc.abstractmethod
+    def __str__(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def value(self):
+        pass
+
+
+class Tag(metaclass=abc.ABCMeta):
+    def __init__(self, element):
+        self._element = element
+
+    @abc.abstractmethod
+    def __str__(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def name(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def string(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def attrs(self):
         pass
