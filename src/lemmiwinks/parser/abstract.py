@@ -21,6 +21,10 @@ class CSSParser(metaclass=abc.ABCMeta):
     def import_tokens(self):
         return self._import_token_list
 
+    @abc.abstractmethod
+    def export(self):
+        pass
+
 
 class HTMLParser(metaclass=abc.ABCMeta):
     def __init__(self, logger_name):
@@ -37,12 +41,12 @@ class HTMLParser(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def base_href(self):
+    def base(self):
         pass
 
-    @base_href.setter
+    @base.deleter
     @abc.abstractmethod
-    def base_href(self, url):
+    def base(self):
         pass
 
     @property
@@ -71,6 +75,11 @@ class Token(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def value(self):
+        pass
+
+    @value.setter
+    @abc.abstractmethod
+    def value(self, value):
         pass
 
 
