@@ -4,3 +4,4 @@ aiohttp==2.3.7
 aiofiles==0.3.2
 selenium==3.8.1
 dependency-injector==3.9.1
+validators==0.12.0
