@@ -8,3 +8,11 @@ class HTTPClientConnectionFailed(HTTPClientError):
 
 class PoolError(HTTPClientError):
     pass
+
+
+class URLResolverError(HTTPClientError):
+    pass
+
+
+class UrlValidationError(URLResolverError):
+    pass
