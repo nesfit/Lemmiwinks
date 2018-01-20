@@ -1,3 +1,5 @@
+from typing import List
+
 # third party imports
 import tinycss2
 
@@ -114,7 +116,7 @@ class BsHTMLParser(abstract.HTMLParser):
         self._soup = parser
         self._element_list = list()
 
-    def find_elements(self, tag, attribute=None):
+    def find_elements(self, tag, attribute=None) -> List[abstract.Tag]:
         elements = self._soup.find_all(tag, attribute)
         self.__convert_to_bselement_list(elements)
         return self._element_list
