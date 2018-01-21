@@ -2,6 +2,16 @@ import os
 import uuid
 
 
+def get_extension_from(path):
+    _, extension = os.path.splitext(path)
+    return extension[1::]
+
+
+def get_filename_from(path):
+    _, filename = os.path.split(path)
+    return filename
+
+
 class Directory:
     def __init__(self, dirpath):
         self._dirpath = dirpath
@@ -29,7 +39,7 @@ class Directory:
         return filepath
 
     def __generate_filepath(self, ext):
-        filename = f"{uuid.uuid4().hex}" if ext else f"{uuid.uuid4().hex}.{ext}"
+        filename = f"{uuid.uuid4().hex}.{ext}" if ext else f"{uuid.uuid4().hex}"
         return os.path.join(self._dirpath, filename)
 
     def remove_file(self, filepath):
