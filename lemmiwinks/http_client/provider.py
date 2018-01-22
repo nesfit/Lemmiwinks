@@ -7,7 +7,7 @@ import dependency_injector.containers as containers
 from selenium.webdriver import DesiredCapabilities
 
 # local imports
-import lemmiwinks.meta_singleton as singleton
+import meta_singleton as singleton
 from . import client
 from . import exception
 from .container import InstanceStatus
@@ -40,6 +40,30 @@ class ClientFactoryProvider(containers.DeclarativeContainer):
 
     chrome_factory = ClientFactory(client.SeleniumClient,
                                    browser_info=DesiredCapabilities.CHROME)
+
+
+class HTTPClientDownloader:
+    def __init__(self, http_client: object):
+        self.__http_client = http_client
+
+    async def dovnload(self, url: str, destination: str) -> None:
+        try:
+            response = await self.__http_client.get_request(url)
+            self.__save_response_content_to(response, destination)
+        except Exception as e:
+            print(e)
+
+    @staticmethod
+    def __save_response_content_to(response, destination):
+        with open(destination, "wb") as fd:
+            fd.write(response.content_descriptor.read())
+
+
+class HTTPClientDownloadProvider:
+    @staticmethod
+    def aio_downloader():
+        http_client = ClientFactoryProvider.aio_factory.client()
+        return HTTPClientDownloader(http_client)
 
 
 class ClientPool(metaclass=singleton.ThreadSafeSingleton):
