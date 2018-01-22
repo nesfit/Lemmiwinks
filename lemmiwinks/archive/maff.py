@@ -1,4 +1,5 @@
 import tempfile
+import logging
 import zipfile
 import os
 import xml.etree.ElementTree as ET
@@ -7,8 +8,7 @@ import xml.etree.ElementTree as ET
 class MozillaArchiveFormat:
     def __init__(self, filepath: str):
         self._filepath = filepath
-        self._temp_file = tempfile.TemporaryDirectory()
-        self._tabs = dict()
+        self._tabs = list()
 
     def __enter__(self):
         return self
@@ -16,67 +16,53 @@ class MozillaArchiveFormat:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.make_archive()
 
-    def add_tab(self, tab_id: str):
-        tab_location = os.path.join(self._filepath, tab_id)
-        os.mkdir(tab_location)
-        self._tabs.update({tab_id: Tab(tab_location)})
-
-    def get_tab(self, tab_id: str):
-        return self._tabs.get(tab_id)
+    def create_tab(self):
+        tab = tempfile.TemporaryDirectory()
+        self._tabs.append(tab.name)
+        return tab.name
 
     def make_archive(self):
-        archive_name = "{}.maff".format(self._filepath)
+        archive_name = f"{self._filepath}.maff"
 
-        with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            self.__zip_directory_to(zipf)
+        with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            self.__zip_directory_to(zip_file)
 
-    def __zip_directory_to(self, zipf):
-        for dirpath, _, file_names in os.walk(self._temp_file.name):
-            for file_name in file_names:
-                zipf.write(os.path.join(dirpath, file_name))
+    def __zip_directory_to(self, zip_file):
+        for tab in self._tabs:
+            for dirpath, _, file_names in os.walk(tab):
+                for file_name in file_names:
+                    filepath = os.path.join(dirpath, file_name)
+                    arcname = os.path.relpath(filepath, os.path.dirname(tab))
+                    zip_file.write(filepath, arcname)
 
 
 class Tab:
-    def __init__(self, dirpath):
-        self._dirpath = dirpath
-        self._index_files_dir = set()
+    def __init__(self, dir):
+        logger_name = f"{__name__}.{ __class__.__name__}"
+        self._logger = logging.getLogger(logger_name)
+        self._temp_file = tempfile.TemporaryDirectory()
 
     @property
     def dirpath(self):
-        return self._dirpath
+        return self._temp_file.name
 
     @property
-    def index_path(self, extension):
-        index_name = "index.{}".format(extension)
-        return os.path.join(self._dirpath, index_name)
+    def list_files(self):
+        return os.listdir(self.dirpath)
+
+    def create_index_files(self):
+        try:
+            path = os.path.join(self.dirpath, "index_files")
+            os.mkdir(path)
+        except FileExistsError:
+            self._logger.info("Directory {} exists".format(path))
+        finally:
+            return path
 
     @property
-    def index_rdf_path(self):
-        return os.path.join(self._dirpath, "index.rdf")
-
-    def create_index_files_dir(self):
-        index_files_path = os.path.join(self._dirpath, "index_files")
-        os.mkdir(index_files_path)
-
-    @property
-    def index_files_path(self):
-        index_files_path = os.path.join(self._dirpath, "index_files")
-
-        if os.path.exists(index_files_path) is False:
-            index_files_path = None
-
-        return index_files_path
-
-    def generate_new_resource_location(self, filename):
-        if filename in self._index_files_dir:
-            raise FileExistsError
-
-        resource_location = os.path.join(self._dirpath, filename)
-        #self._index_files_dir.append(filename)
-        return resource_location
-
-    def get_resource_location(self, filename):
-        pass
+    def list_index_files(self):
+        path = os.path.join(self.dirpath, "index_files")
+        return os.listdir(path)
 
 
 class RDF:
