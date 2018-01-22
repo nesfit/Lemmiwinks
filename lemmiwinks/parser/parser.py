@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 # third party imports
 import tinycss2
@@ -12,7 +12,7 @@ DEFAULT_ENCODING = "utf-8"
 
 class TinyCSSParser(abstract.CSSParser):
     def __init__(self, parser):
-        logger_name = "{}.{}".format(__name__, __class__.__name__)
+        logger_name = f"{__name__}.{__class__.__name__}"
         super().__init__(parser, logger_name)
 
     def __del__(self):
@@ -111,21 +111,18 @@ class TinyCSSParser(abstract.CSSParser):
 
 class BsHTMLParser(abstract.HTMLParser):
     def __init__(self, parser):
-        logger_name = "{}.{}".format(__name__, __class__.__name__)
+        logger_name = f"{__name__}.{__class__.__name__}"
         super().__init__(logger_name)
         self._soup = parser
-        self._element_list = list()
 
-    def find_elements(self, tag, attribute=None) -> List[abstract.Tag]:
+    def find_elements(self, tag, attribute: Dict = {}) -> List[abstract.Tag]:
         elements = self._soup.find_all(tag, attribute)
-        self.__convert_to_bselement_list(elements)
-        return self._element_list
+        element_list = self.__convert_to_bselement_list(elements)
+        return element_list
 
-    def __convert_to_bselement_list(self, elements):
-        self._element_list.clear()
-
-        for element in elements:
-            self._element_list.append(BsTag(element))
+    @staticmethod
+    def __convert_to_bselement_list(elements):
+        return [BsTag(element) for element in elements]
 
     @property
     def title(self):
