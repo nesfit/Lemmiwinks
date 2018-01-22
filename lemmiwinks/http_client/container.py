@@ -29,6 +29,7 @@ class Response:
     @content_descriptor.setter
     def content_descriptor(self, content_descriptor: tempfile.NamedTemporaryFile):
         self.__content_descriptor = content_descriptor
+        self.__content_descriptor.seek(0)
 
     @property
     def url_and_status(self):
