@@ -6,14 +6,16 @@ from . import parser
 
 class CSSParserContainer:
     @staticmethod
-    def timycss_stylesheet(fd):
-        stylesheet_parser = tinycss2.parse_stylesheet(fd)
-        return parser.TinyCSSParser(stylesheet_parser)
-
-    @staticmethod
-    def tinycss_declaration(declaration):
-        dec_parser = tinycss2.parse_declaration_list(declaration)
-        return parser.TinyCSSParser(dec_parser)
+    def timycss_parser(data):
+        try:
+            if hasattr(data, "read"): # is file like object
+                css_parser = tinycss2.parse_stylesheet(data)
+            else:
+                css_parser = tinycss2.parse_declaration_list(data)
+        except Exception as e:
+            print(e)
+        else:
+            return parser.TinyCSSParser(css_parser)
 
 
 class HTMLParserContainer:
