@@ -36,35 +36,6 @@ class MozillaArchiveFormat:
                     zip_file.write(filepath, arcname)
 
 
-class Tab:
-    def __init__(self, dir):
-        logger_name = f"{__name__}.{ __class__.__name__}"
-        self._logger = logging.getLogger(logger_name)
-        self._temp_file = tempfile.TemporaryDirectory()
-
-    @property
-    def dirpath(self):
-        return self._temp_file.name
-
-    @property
-    def list_files(self):
-        return os.listdir(self.dirpath)
-
-    def create_index_files(self):
-        try:
-            path = os.path.join(self.dirpath, "index_files")
-            os.mkdir(path)
-        except FileExistsError:
-            self._logger.info("Directory {} exists".format(path))
-        finally:
-            return path
-
-    @property
-    def list_index_files(self):
-        path = os.path.join(self.dirpath, "index_files")
-        return os.listdir(path)
-
-
 class RDF:
     def __init__(self, filepath):
         self._filepath = filepath
