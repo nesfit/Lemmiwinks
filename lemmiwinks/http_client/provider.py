@@ -44,14 +44,17 @@ class ClientFactoryProvider(containers.DeclarativeContainer):
 
 class HTTPClientDownloader:
     def __init__(self, http_client: object):
+        self._logger = logging.getLogger(f"{__name__}{__class__.__name__}")
         self.__http_client = http_client
 
-    async def dovnload(self, url: str, destination: str) -> None:
+    async def dovnload(self, url: str, dst: str) -> None:
         try:
             response = await self.__http_client.get_request(url)
-            self.__save_response_content_to(response, destination)
+            self.__save_response_content_to(response, dst)
+        except exception.HTTPClientConnectionFailed as e:
+            self._logger.error(f"error: {e}, url: {url}, dst: {dst}")
         except Exception as e:
-            print(e)
+            self._logger.error(f"error: {e}, url: {url}, dst: {dst}")
 
     @staticmethod
     def __save_response_content_to(response, destination):
