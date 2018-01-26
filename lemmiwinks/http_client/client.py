@@ -34,7 +34,7 @@ class AIOClient(abstract.AsyncClient):
         try:
             content_descriptor, url_and_status = await self.__get_response_from(url)
         except Exception as e:
-            self._logger.error("Cannot connect to host {}".format(url))
+            self._logger.error(f"Cannot connect to host {url}")
             raise exception.HTTPClientConnectionFailed(e)
         else:
             return container.Response(content_descriptor, url_and_status)
@@ -103,7 +103,7 @@ class SeleniumClient(abstract.AsyncJsClient):
             await self.__send_request(url)
             content_descriptor, url_and_status = self.__get_response()
         except Exception as e:
-            self._logger.error(e)
+            self._logger.error(f"Cannot connect to host {url}")
             raise exception.HTTPClientConnectionFailed(e)
         else:
             return container.Response(content_descriptor, url_and_status)
