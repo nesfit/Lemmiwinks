@@ -115,28 +115,28 @@ class BsHTMLParser(abstract.HTMLParser):
         super().__init__(logger_name)
         self._soup = parser
 
-    def find_elements(self, tag, attribute: Dict = {}) -> List[abstract.Tag]:
+    def find_elements(self, tag, attribute: Dict = {}) -> List[abstract.Element]:
         elements = self._soup.find_all(tag, attribute)
         element_list = self.__convert_to_bselement_list(elements)
         return element_list
 
     @staticmethod
     def __convert_to_bselement_list(elements):
-        return [BsTag(element) for element in elements]
+        return [BsElement(element) for element in elements]
 
     @property
     def title(self):
         if self._soup.title is None:
             return None
         else:
-            return BsTag(self._soup.title)
+            return BsElement(self._soup.title)
 
     @property
     def base(self):
         if self._soup.base is None:
             return None
         else:
-            return BsTag(self._soup.base)
+            return BsElement(self._soup.base)
 
     @base.deleter
     def base(self):
@@ -159,7 +159,7 @@ class BsHTMLParser(abstract.HTMLParser):
         return self._soup.prettify(DEFAULT_ENCODING)
 
 
-class BsTag(abstract.Tag):
+class BsElement(abstract.Element):
     def __init__(self, element):
         super().__init__(element)
 

@@ -83,7 +83,7 @@ class Token(metaclass=abc.ABCMeta):
         pass
 
 
-class Tag(metaclass=abc.ABCMeta):
+class Element(metaclass=abc.ABCMeta):
     def __init__(self, element):
         self._element = element
 
