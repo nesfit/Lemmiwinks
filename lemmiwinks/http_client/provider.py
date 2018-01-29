@@ -7,7 +7,7 @@ import dependency_injector.containers as containers
 from selenium.webdriver import DesiredCapabilities
 
 # local imports
-import meta_singleton as singleton
+import singleton as singleton
 from . import client
 from . import exception
 from .container import InstanceStatus
