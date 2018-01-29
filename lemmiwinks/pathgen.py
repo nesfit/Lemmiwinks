@@ -38,15 +38,19 @@ class FilePathGenerator:
         self.path_prefix = path_prefix
 
     def generate_filepath_with(self, extension: str) -> Path:
-        abs_path = self.__generate_abs_filepath_with(extension)
-        rel_path = abs_path.relative_to(self.path_prefix)
-        return Path(abs=str(abs_path), rel=str(rel_path))
+        try:
+            abs_path = self.__generate_abs_filepath_with(extension)
+            rel_path = abs_path.relative_to(self.path_prefix)
+        except ValueError:
+            rel_path = abs_path
+        finally:
+            return Path(abs=str(abs_path), rel=str(rel_path))
 
     def __generate_abs_filepath_with(self, extension: str) -> pathlib.Path:
         return self._directory.get_filepath_with(extension)
 
 
-class FilePathGeneratorContainer:
+class FilePathProvider:
     @classmethod
     def filepath_generator(cls, location, path_prefix):
         directory = DirectoryWrapper(location)
