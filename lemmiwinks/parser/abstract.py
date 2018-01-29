@@ -91,6 +91,14 @@ class Element(metaclass=abc.ABCMeta):
     def __str__(self):
         pass
 
+    @abc.abstractclassmethod
+    def __getitem__(self, item):
+        pass
+
+    @abc.abstractclassmethod
+    def __setitem__(self, key, value):
+        pass
+
     @property
     @abc.abstractmethod
     def name(self):
