@@ -7,10 +7,10 @@ import dependency_injector.containers as containers
 from selenium.webdriver import DesiredCapabilities
 
 # local imports
-import singleton as singleton
 from . import client
 from . import exception
 from .container import InstanceStatus
+import singleton as singleton
 
 
 class ClientFactory:
@@ -47,14 +47,18 @@ class HTTPClientDownloader:
         self._logger = logging.getLogger(f"{__name__}{__class__.__name__}")
         self.__http_client = http_client
 
-    async def dovnload(self, url: str, dst: str) -> None:
+    async def download(self, url: str, dst: str) -> None:
         try:
             response = await self.__http_client.get_request(url)
             self.__save_response_content_to(response, dst)
         except exception.HTTPClientConnectionFailed as e:
-            self._logger.error(f"error: {e}, url: {url}, dst: {dst}")
+            self._logger.error(f"error: {e}")
+            self._logger.error(f"url: {url}")
+            self._logger.error(f"dst: {dst}")
         except Exception as e:
-            self._logger.error(f"error: {e}, url: {url}, dst: {dst}")
+            self._logger.error(f"error: {e}")
+            self._logger.error(f"url: {url}")
+            self._logger.error(f"dst: {dst}")
 
     @staticmethod
     def __save_response_content_to(response, destination):
