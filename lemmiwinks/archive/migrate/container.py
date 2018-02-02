@@ -9,6 +9,8 @@ class ElementFilterRules:
                         "track": [{"src": True}]}
     _stylesheet_link = {"link": [{"href": True, "rel": "stylesheet"}]}
     _js_style = {"script": [{"src": True}]}
+    _style = {"style": [None]}
+    _description_style = {True: [{"style": True}]}
 
     @property
     def elements(self):
@@ -21,6 +23,14 @@ class ElementFilterRules:
     @property
     def js_style(self):
         return self.__flatten(ElementFilterRules._js_style)
+
+    @property
+    def style(self):
+        return self.__flatten(ElementFilterRules._style)
+
+    @property
+    def description_style(self):
+        return self.__flatten(ElementFilterRules._description_style)
 
     @staticmethod
     def __flatten(rules):
@@ -41,8 +51,17 @@ class HTMLFilter:
     def stylesheet_link(self):
         return self.__get_element_list_from(self._filter_rules.stylesheet_link)
 
+    @property
     def js_style(self):
         return self.__get_element_list_from(self._filter_rules.js_style)
+
+    @property
+    def style(self):
+        return self.__get_element_list_from(self._filter_rules.style)
+
+    @property
+    def description_style(self):
+        return self.__get_element_list_from(self._filter_rules.description_style)
 
     def __get_element_list_from(self, rules):
         element_rules = [(element, attr) for name, attrs in rules

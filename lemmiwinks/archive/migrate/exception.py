@@ -1,2 +1,0 @@
-class MigrationFailure(Exception):
-    pass
