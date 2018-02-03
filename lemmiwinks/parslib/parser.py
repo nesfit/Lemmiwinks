@@ -27,9 +27,6 @@ class TinyCSSParser(abstract.CSSParser):
 
     def __search_tokens_in(self, rule):
         try:
-            if rule.content is None:
-                return
-
             for rule in rule.content:
                 self.__process_rule(rule)
         except TypeError:
