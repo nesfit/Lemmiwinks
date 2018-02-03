@@ -2,7 +2,7 @@ import pathlib
 import uuid
 import collections
 
-Path = collections.namedtuple('Path', 'abs rel')
+Path = collections.namedtuple('Path', 'abspath relpath')
 
 
 class DirectoryWrapper:
@@ -44,7 +44,7 @@ class FilePathGenerator:
         except ValueError:
             rel_path = abs_path
         finally:
-            return Path(abs=str(abs_path), rel=str(rel_path))
+            return Path(abspath=str(abs_path), relpath=str(rel_path))
 
     def __generate_abs_filepath_with(self, extension: str) -> pathlib.Path:
         return self._directory.get_filepath_with(extension)
