@@ -19,11 +19,17 @@ class TinyCSSParser(abstract.CSSParser):
         pass
 
     def parse_tokens(self):
-        for rule in self._parser:
-            self.__search_tokens_in(rule)
+        try:
+            for rule in self._parser:
+                self.__search_tokens_in(rule)
+        except Exception as e:
+            print(rule.content)
 
     def __search_tokens_in(self, rule):
         try:
+            if rule.content is None:
+                return
+
             for rule in rule.content:
                 self.__process_rule(rule)
         except TypeError:
@@ -75,7 +81,7 @@ class TinyCSSParser(abstract.CSSParser):
     def __process_component_value(self, component_value):
         if self.__is_string_token(component_value) or self.__is_url_token(
                 component_value):
-            self._import_token_list.append(component_value)
+            self._import_token_list.append(TinyToken(component_value))
         else:
             self.__search_tokens_in(component_value)
 
@@ -89,7 +95,7 @@ class TinyCSSParser(abstract.CSSParser):
 
     def __process_url_token(self, token):
         if self.__is_token_value_url(token):
-            self._url_token_list.append(token.value)
+            self._url_token_list.append(TinyToken(token))
 
     @staticmethod
     def __is_token_value_url(token):
@@ -104,6 +110,10 @@ class TinyCSSParser(abstract.CSSParser):
     def __process_declaration(self, rule):
         for component_value in rule.value:
             self.__search_tokens_in(component_value)
+
+    @staticmethod
+    def __is_atrule(rule):
+        return rule.type == "at-rule"
 
     def export(self):
         return tinycss2.serialize(self._parser)
@@ -165,6 +175,12 @@ class BsElement(abstract.Element):
 
     def __str__(self):
         return str(self._element)
+
+    def __getitem__(self, item):
+        return self._element.attrs.get(item)
+
+    def __setitem__(self, key, value):
+        self._element.attrs.update({key: value})
 
     @property
     def name(self):
