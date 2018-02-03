@@ -35,12 +35,12 @@ class DirectoryWrapper:
 class FilePathGenerator:
     def __init__(self, directory: object, path_prefix: str):
         self._directory = directory
-        self.path_prefix = path_prefix
+        self._path_prefix = path_prefix
 
     def generate_filepath_with(self, extension: str) -> Path:
         try:
             abs_path = self.__generate_abs_filepath_with(extension)
-            rel_path = abs_path.relative_to(self.path_prefix)
+            rel_path = abs_path.relative_to(self._path_prefix)
         except ValueError:
             rel_path = abs_path
         finally:
