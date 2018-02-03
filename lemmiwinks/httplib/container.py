@@ -39,6 +39,26 @@ class Response:
     def url_and_status(self, url_and_status: list):
         self.__url_and_status = url_and_status
 
+    @property
+    def requested_url(self):
+        try:
+            url, _ = self.url_and_status[0]
+        except Exception as e:
+            url = None
+            self.__logger.error(e)
+        finally:
+            return url
+
+    @property
+    def accessed_url(self):
+        try:
+            url, _ = self.url_and_status[-1]
+        except Exception as e:
+            url = None
+            self.__logger.error(e)
+        finally:
+            return url
+
 
 class InstanceStatus(enum.Enum):
     RESERVED = enum.auto()
