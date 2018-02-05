@@ -23,12 +23,15 @@ class TinyCSSParser(abstract.CSSParser):
             for rule in self._parser:
                 self.__search_tokens_in(rule)
         except Exception as e:
-            print(rule.content)
+            self._logger.error(e)
 
     def __search_tokens_in(self, rule):
         try:
-            for rule in rule.content:
-                self.__process_rule(rule)
+            if self.__is_declaration(rule):
+                [self.__process_rule(component_value) for component_value in rule.value]
+            else:
+                [self.__process_rule(rule) for rule in rule.content]
+
         except TypeError:
             # Some object are not iterable for example <AtRule @import … { … }>
             self.__process_rule(rule)
@@ -50,9 +53,6 @@ class TinyCSSParser(abstract.CSSParser):
         # url(http://mysite.example.com/mycursor.png)
         elif self.__is_url_token(rule):
             self.__process_url_token(rule)
-        # declaration rule can be found in HTML style attribute
-        elif self.__is_declaration(rule):
-            self.__process_declaration(rule)
         # indirect recursion, parse rule to sub-rules and analyze
         else:
             self.__search_tokens_in(rule)
@@ -186,6 +186,10 @@ class BsElement(abstract.Element):
     @property
     def string(self):
         return self._element.string
+
+    @string.setter
+    def string(self, string):
+        self._element.string = string
 
     @property
     def attrs(self):
