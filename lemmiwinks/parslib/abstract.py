@@ -89,27 +89,32 @@ class Element(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def __str__(self):
-        pass
+        raise NotImplemented
 
     @abc.abstractclassmethod
     def __getitem__(self, item):
-        pass
+        raise NotImplemented
 
     @abc.abstractclassmethod
     def __setitem__(self, key, value):
-        pass
+        raise NotImplemented
 
     @property
     @abc.abstractmethod
     def name(self):
-        pass
+        raise NotImplemented
 
     @property
     @abc.abstractmethod
     def string(self):
-        pass
+        raise NotImplemented
+
+    @string.setter
+    @abc.abstractmethod
+    def string(self, string):
+        raise NotImplemented
 
     @property
     @abc.abstractmethod
     def attrs(self):
-        pass
+        raise NotImplemented
