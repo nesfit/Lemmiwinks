@@ -15,7 +15,7 @@ class AIOClient(abstract.AsyncClient):
     def __init__(self, pool_limit=30, timeout=None,
                  proxy=None, headers=None, cookies=None):
 
-        super().__init__("{}.{}".format(__name__, __class__.__name__))
+        super().__init__("{}.{}".format(__name__, self.__class__.__name__))
 
         self.timeout = timeout
         self.proxy = proxy
@@ -51,13 +51,15 @@ class AIOClient(abstract.AsyncClient):
 
         return content_descriptor, url_and_status
 
-    def __get_url_and_status_from(self, response):
+    @staticmethod
+    def __get_url_and_status_from(response):
         url_and_status = [(str(record.url), record.status) for record in response.history]
 
         url_and_status.append((str(response.url), response.status))
         return url_and_status
 
-    async def __get_content_descriptor_from(self, response):
+    @staticmethod
+    async def __get_content_descriptor_from(response):
         content_descriptor = tempfile.NamedTemporaryFile()
 
         async for data in response.content.iter_chunked(self.__chunk_size):
@@ -79,7 +81,7 @@ class AIOClient(abstract.AsyncClient):
 
 class SeleniumClient(abstract.AsyncJsClient):
     def __init__(self, executor_url: str, browser_info, cookies=dict()):
-        super().__init__("{}.{}".format(__name__, __class__.__name__))
+        super().__init__("{}.{}".format(__name__, self.__class__.__name__))
 
         self.cookies = cookies
 

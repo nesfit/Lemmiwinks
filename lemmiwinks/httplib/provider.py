@@ -51,10 +51,6 @@ class HTTPClientDownloader:
         try:
             response = await self.__http_client.get_request(url)
             self.__save_response_content_to(response, dst)
-        except exception.HTTPClientConnectionFailed as e:
-            self._logger.error(f"error: {e}")
-            self._logger.error(f"url: {url}")
-            self._logger.error(f"dst: {dst}")
         except Exception as e:
             self._logger.error(f"error: {e}")
             self._logger.error(f"url: {url}")
