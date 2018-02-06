@@ -9,7 +9,8 @@ class CSSParserProvider:
     def tinycss_parser(cls, data, declaration=False):
         try:
             if declaration:
-                css_parser = tinycss2.parse_declaration_list(data)
+                css_parser = tinycss2.parse_declaration_list(
+                    data, skip_comments=True, skip_whitespace=True)
             else:
                 css_parser = CSSParserProvider.__create_tynicss_stylesheet(data)
         except Exception as e:
@@ -20,9 +21,11 @@ class CSSParserProvider:
     @classmethod
     def __create_tynicss_stylesheet(cls, data):
         if hasattr(data, "read"):  # is file like object
-            css_parser, _ = tinycss2.parse_stylesheet_bytes(data.read())
+            css_parser, _ = tinycss2.parse_stylesheet_bytes(
+                data.read(), skip_comments=True, skip_whitespace=True)
         else:
-            css_parser = tinycss2.parse_stylesheet(data)
+            css_parser = tinycss2.parse_stylesheet(
+                data, skip_comments=True, skip_whitespace=True)
         return css_parser
 
 

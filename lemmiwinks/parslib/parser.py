@@ -12,11 +12,8 @@ DEFAULT_ENCODING = "utf-8"
 
 class TinyCSSParser(abstract.CSSParser):
     def __init__(self, parser):
-        logger_name = f"{__name__}.{__class__.__name__}"
+        logger_name = f"{__name__}.{self.__class__.__name__}"
         super().__init__(parser, logger_name)
-
-    def __del__(self):
-        pass
 
     def parse_tokens(self):
         try:
@@ -29,12 +26,16 @@ class TinyCSSParser(abstract.CSSParser):
         try:
             if self.__is_declaration(rule):
                 [self.__process_rule(component_value) for component_value in rule.value]
-            else:
+            # @import url;
+            # @import url list-of-media-queries;
+            elif self.__is_import(rule):
+                self.__process_import(rule)
+            elif self.__is_at_rule(rule) or self.__is_qualified_rule(rule):
+                [self.__process_rule(component_value) for component_value in rule.prelude]
                 [self.__process_rule(rule) for rule in rule.content]
-
         except TypeError:
-            # Some object are not iterable for example <AtRule @import … { … }>
-            self.__process_rule(rule)
+            # (Some object are not iterable for example <AtRule @import … { … }>)
+            pass
         except AttributeError:
             # The exception is raised during the parsing when
             # the parser processes the CSS token which is not stored.
@@ -43,19 +44,30 @@ class TinyCSSParser(abstract.CSSParser):
             self._logger.error("Unexpected error during parsing {}\n{}".format(e, rule))
             raise exception.ParserError(e)
 
+    @staticmethod
+    def __is_declaration(rule):
+        return rule.type == "declaration"
+
+    @staticmethod
+    def __is_at_rule(rule):
+        return rule.type == "at-rule"
+
+    @staticmethod
+    def __is_qualified_rule(rule):
+        return rule.type == "qualified-rule"
+
     def __process_rule(self, rule):
-        # @import url;
-        # @import url list-of-media-queries;
-        if self.__is_import(rule):
-            self.__process_import(rule)
-        # url("http://mysite.example.com/mycursor.png")
-        # url('http://mysite.example.com/mycursor.png')
-        # url(http://mysite.example.com/mycursor.png)
-        elif self.__is_url_token(rule):
-            self.__process_url_token(rule)
-        # indirect recursion, parse rule to sub-rules and analyze
-        else:
-            self.__search_tokens_in(rule)
+        try:
+            # url("http://mysite.example.com/mycursor.png")
+            # url('http://mysite.example.com/mycursor.png')
+            # url(http://mysite.example.com/mycursor.png)
+            if self.__is_url_token(rule):
+                self.__process_url_token(rule)
+            # indirect recursion, parse rule to sub-rules and analyze
+            else:
+                [self.__process_rule(value) for value in rule.value]
+        except Exception:
+            pass
 
     @staticmethod
     def __is_import(rule):
@@ -100,17 +112,9 @@ class TinyCSSParser(abstract.CSSParser):
         # In this case, URL starts with "data:image" prefix.
         return token.value.lower().startswith("data:image") is False
 
-    @staticmethod
-    def __is_declaration(rule):
-        return rule.type == "declaration"
-
     def __process_declaration(self, rule):
         for component_value in rule.value:
             self.__search_tokens_in(component_value)
-
-    @staticmethod
-    def __is_atrule(rule):
-        return rule.type == "at-rule"
 
     def export(self):
         return tinycss2.serialize(self._parser)
