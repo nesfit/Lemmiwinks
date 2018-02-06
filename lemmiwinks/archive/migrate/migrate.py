@@ -50,7 +50,6 @@ class CSSMigration(abstract.Migrate):
         self._token_updater = UpdateToken(css_type.resolver, css_type.path_gen, self._client)
 
     async def migrate(self):
-        print(self._css_type.parser.import_tokens)
         tasks = [self._token_updater.update_entity(token)
                  for token in self._css_type.parser.url_tokens]
 
@@ -59,6 +58,17 @@ class CSSMigration(abstract.Migrate):
             for token in self._css_type.parser.import_tokens]
 
         await asyncio.gather(*tasks)
+
+    def update_url_tokens(self):
+        tasks = [self._token_updater.update_entity(token)
+                 for token in self._css_type.parser.url_tokens]
+        return tasks
+
+    def update_import_tokens(self):
+        tasks = [self._token_updater.update_recursive_entity(
+            self.__migrate_recursive_source, token)
+            for token in self._css_type.parser.import_tokens]
+        return tasks
 
     async def __migrate_recursive_source(self, url):
         self._token_updater.register_path_for(url)
@@ -69,16 +79,14 @@ class CSSMigration(abstract.Migrate):
         if self._css_type.recursion_limit > 0:
             await self.__migrate_response_recursively(response)
         else:
-            print(f"recursion {self._css_type.recursion_limit} save")
             self.__save_response(response)
 
     async def __migrate_response_recursively(self, response):
         path = self._src_register.get(response.requested_url).abspath
 
-        css_file = CSSFileStylesheet(response, self._settings,
+        css_file = CSSStylesheetFile(response, self._settings,
                                      path, self._css_type.recursion_limit - 1)
 
-        print("tu som")
         css_migrate = CSSMigration(css_file, self._settings)
 
         await css_migrate.migrate()
@@ -92,7 +100,7 @@ class CSSMigration(abstract.Migrate):
             fd.write(response.content_descriptor.read())
 
 
-class CSSFileStylesheet(abstract.EssentialPart):
+class CSSStylesheetFile(abstract.EssentialPart):
     def __init__(self, data, settings, filepath, recursion_limit=3):
         self._filepath = filepath
 
@@ -105,12 +113,20 @@ class CSSFileStylesheet(abstract.EssentialPart):
         super().__init__(parser, resolver, path_gen,essential_location,
                          essential_location, recursion_limit)
 
+        self._css_migration = CSSMigration(self, settings)
+
+    async def migrate(self):
+        tasks = self._css_migration.update_url_tokens()
+        tasks += self._css_migration.update_import_tokens()
+
+        await asyncio.gather(*tasks)
+
     def export(self):
         with open(self._filepath, "w") as fd:
             fd.write(self.parser.export())
 
 
-class CSSInlineStylesheet(abstract.EssentialPart):
+class CSSInlineStylesheet(abstract.EssentialPart, abstract.Migrate):
     def __init__(self, data, url, essential_location, res_location, settings, recursion_limit=3):
         parser = settings.css_parser(data)
         parser.parse_tokens()
@@ -119,6 +135,14 @@ class CSSInlineStylesheet(abstract.EssentialPart):
 
         super().__init__(parser, resolver, path_gen, essential_location,
                          res_location, recursion_limit)
+
+        self._css_migration = CSSMigration(self, settings)
+
+    async def migrate(self):
+        tasks = self._css_migration.update_url_tokens()
+        tasks += self._css_migration.update_import_tokens()
+
+        await asyncio.gather(*tasks)
 
     def export(self):
         return self.parser.export()
@@ -134,6 +158,14 @@ class CSSDeclaration(abstract.EssentialPart):
         super().__init__(parser, resolver, path_gen, essential_location,
                          res_location, recursion_limit)
 
+        self._css_migration = CSSMigration(self, settings)
+
+    async def migrate(self):
+        tasks = self._css_migration.update_url_tokens()
+        tasks += self._css_migration.update_import_tokens()
+
+        await asyncio.gather(*tasks)
+
     def export(self):
         return self.parser.export()
 
@@ -147,7 +179,7 @@ class CSSContainer:
 
     @property
     def css_file(self):
-        return di_providers.Factory(CSSFileStylesheet, settings=self._settings)
+        return di_providers.Factory(CSSStylesheetFile, settings=self._settings)
 
     @property
     def css_inline(self):
@@ -182,86 +214,84 @@ class HTMLMigration:
         self._html_filter = container.HTMLFilter(index_file.parser)
         self._src_register = SrcRegister()
 
-    async def migrate(self):
-        await self._migrate_html_elements_sources()
-        await self._migrate_css_file_stylesheet()
-
-    async def _migrate_html_elements_sources(self):
+    def migrate_html_elements_sources(self):
         tasks = [self._element_updater.update_entity(element, attr=attr)
                  for element, attr in self._html_filter.elements]
 
-        await asyncio.gather(*tasks)
+        return tasks
 
-    async def _migrate_css_file_stylesheet(self):
+    def migrate_css_file_stylesheet(self):
         tasks = [self._element_updater.update_recursive_entity(
             self.__migrate_css_file, element, attr=attr)
             for element, attr in self._html_filter.stylesheet_link]
 
-        await asyncio.gather(*tasks)
+        return tasks
 
     async def __migrate_css_file(self, url):
         self._element_updater.register_path_for(url)
+
         response = await self._client.get_request(url)
         path = self._src_register.get(url).abspath
+
         css_file = self._css_container.css_file(data=response, filepath=path)
-        await CSSMigration(css_file, self._settings).migrate()
+        await css_file.migrate()
         css_file.export()
 
+    def migrate_css_style(self):
+        tasks = [self.__update_element_style_attribute(element)
+                 for element, _ in self._html_filter.style]
+
+        return tasks
+
+    @abstract._task
+    async def __update_element_style_attribute(self, element):
+        css_style = self._css_container.css_inline(data=element.string)
+        await css_style.migrate()
+        element.string = css_style.export()
+
+    def migrate_css_declaration(self):
+        tasks = [self.__update_element_style_attribute(element, attr)
+                 for element, attr in self._html_filter.description_style]
+
+        return tasks
+
+    @abstract._task
+    async def __update_element_style_attribute(self, element, attr):
+        css_declaration = self._css_container.css_declaration(data=element[attr])
+        await css_declaration.migrate()
+        element[attr] = css_declaration.export()
 
 
-class IndexFileMigration:
-    def __init__(self, response,
-                 settings: abstract.MigrationSettings,
-                 filepath: str):
-        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._settings = settings
-        self._src_register = SrcRegister()
-        self._parser = settings.html_parser(response.content_descriptor)
-        self._html_filter = container.HTMLFilter(self._parser)
-        self._filepath = filepath
-        self._base_dst = pathlib.Path(filepath).parent
-        self._resources_dst = pathlib.Path(self._base_dst).joinpath("index_files")
-        self._path_gen = settings.path_gen(self._resources_dst, self._base_dst)
-        self._client = settings.http_client()
-        self._resolver = self.__init_resolver(response.accessed_url)
-        self._element_updater = UpdateElement(self._resolver, self._path_gen, self._client)
-        # remove base tag
-        del self._parser.base
+class HTMLMigrationWithJS(HTMLMigration):
+    def __init__(self, index_file, settings):
+        super().__init__(index_file, settings)
 
-    def __init_resolver(self, url):
-        try:
-            resolver = self._settings.resolver(url)
-            resolver.base = resolver.resolve(self._parser.base["href"])
-        except Exception as e:
-            self._logger.info(f"{e}")
-            self._logger.info(f"Base url was {url}")
-            self._logger.info(f"Base tag is {self._parser.base}")
-        finally:
-            return resolver
-
-    async def migrate_html_elements_sources(self):
+    def migrate_javascript(self):
         tasks = [self._element_updater.update_entity(element, attr=attr)
-                 for element, attr in self._html_filter.elements]
-        await asyncio.gather(*tasks)
+                 for element, attr in self._html_filter.js_style]
 
-    async def migrate_css_stylesheets(self):
-        for element, attr in self._html_filter.stylesheet_link:
-            url = self._resolver.resolve(element[attr])
-            response = await self._client.get_request(url)
-            path = self._path_gen.generate_filepath_with(".css")
-            css_file = CSSFileStylesheet(response, self._settings, path.abspath)
-            migrator = CSSMigration(css_file, self._settings)
-            await migrator.migrate()
-            css_file.export()
-            element[attr] = path.relpath
+        return tasks
 
-    def save(self):
-        with open(self._filepath, "wb") as fd:
-            fd.write(self._parser.export())
+    def migrate_frames(self):
+        tasks = [self._element_updater.update_recursive_entity(
+            self.__migrate_frames, element, attr=attr)
+            for element, attr in self._html_filter.frames]
+
+        return tasks
+
+    async def __migrate_frames(self, url):
+        self._element_updater.register_path_for(url)
+        response = await self._client.get_request(url)
+        path = self._src_register.get(url).abspath
+        html_file = IndexFile(response, path, self._index_file.resource_location,
+                              self._settings, self._index_file.recuriosn_limit-1)
+        await html_file.migrate()
+        html_file.export()
 
 
-class IndexFile(abstract.EssentialPart):
+class IndexFile(abstract.EssentialPart, abstract.Migrate):
     def __init__(self, response, filepath, res_location, settings, recursion_limit=3):
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._filepath = filepath
         self._settings = settings
 
@@ -270,7 +300,11 @@ class IndexFile(abstract.EssentialPart):
         resolver = self.__init_resolver(response.accessed_url)
         path_gen = settings.path_gen(res_location, essential_location)
 
-        super().__init__(parser, resolver, path_gen, essential_location, res_location, recursion_limit)
+        super().__init__(parser, resolver, path_gen,
+                         essential_location, res_location, recursion_limit)
+
+        self._html_migration = HTMLMigrationWithJS(self, settings)
+        del self.parser.base
 
     def __init_resolver(self, url):
         try:
@@ -283,7 +317,19 @@ class IndexFile(abstract.EssentialPart):
         finally:
             return resolver
 
+    async def migrate(self):
+        tasks = self._html_migration.migrate_css_declaration()
+        tasks += self._html_migration.migrate_css_style()
+        tasks += self._html_migration.migrate_html_elements_sources()
+        tasks += self._html_migration.migrate_css_file_stylesheet()
+        tasks += self._html_migration.migrate_frames()
+        tasks += self._html_migration.migrate_javascript()
+
+        await asyncio.gather(*tasks)
+
     def export(self):
         with open(self._filepath, "wb") as fd:
             fd.write(self.parser.export())
+
+
 

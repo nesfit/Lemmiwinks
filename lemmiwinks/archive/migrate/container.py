@@ -1,36 +1,42 @@
 class ElementFilterRules:
-    _element_sources = {"img": [{"src": True}, {"data-src": True}],
-                        "video": [{"src": True}, {"poster": True}],
-                        "embed": [{"src": True}],
-                        "source": [{"src": True}],
-                        "audio": [{"src": True}],
-                        "input": [{"src": True}],
-                        "object": [{"data": True}, {"codebase": True}],
-                        "track": [{"src": True}]}
-    _stylesheet_link = {"link": [{"href": True, "rel": "stylesheet"}]}
-    _js_style = {"script": [{"src": True}]}
-    _style = {"style": [None]}
-    _description_style = {True: [{"style": True}]}
+    __element_sources = {"img": [{"src": True}, {"data-src": True}],
+                         "video": [{"src": True}, {"poster": True}],
+                         "embed": [{"src": True}],
+                         "source": [{"src": True}],
+                         "audio": [{"src": True}],
+                         "input": [{"src": True}],
+                         "object": [{"data": True}, {"codebase": True}],
+                         "track": [{"src": True}]}
+    __stylesheet_link = {"link": [{"href": True, "rel": "stylesheet"}]}
+    __js_style = {"script": [{"src": True}]}
+    __style = {"style": [None]}
+    __description_style = {True: [{"style": True}]}
+    __frames = {"frame": [{"src": True}],
+                "iframe": [{"src": True}]}
 
     @property
     def elements(self):
-        return self.__flatten(ElementFilterRules._element_sources)
+        return self.__flatten(ElementFilterRules.__element_sources)
 
     @property
     def stylesheet_link(self):
-        return self.__flatten(ElementFilterRules._stylesheet_link)
+        return self.__flatten(ElementFilterRules.__stylesheet_link)
 
     @property
     def js_style(self):
-        return self.__flatten(ElementFilterRules._js_style)
+        return self.__flatten(ElementFilterRules.__js_style)
 
     @property
     def style(self):
-        return self.__flatten(ElementFilterRules._style)
+        return self.__flatten(ElementFilterRules.__style)
 
     @property
     def description_style(self):
-        return self.__flatten(ElementFilterRules._description_style)
+        return self.__flatten(ElementFilterRules.__description_style)
+
+    @property
+    def frames(self):
+        return self.__flatten(ElementFilterRules.__frames)
 
     @staticmethod
     def __flatten(rules):
@@ -63,6 +69,10 @@ class HTMLFilter:
     def description_style(self):
         return self.__get_element_list_from(self._filter_rules.description_style)
 
+    @property
+    def frames(self):
+        return self.__get_element_list_from(self._filter_rules.frames)
+
     def __get_element_list_from(self, rules):
         element_rules = [(element, attr) for name, attrs in rules
                          for element, attr in self.__convert_to_list(name, attrs)]
@@ -75,5 +85,9 @@ class HTMLFilter:
 
     @staticmethod
     def __get_depended_attribute(attrs):
-        attr = (attr for attr, value in attrs.items() if value is True).__next__()
-        return attr
+        try:
+            attr = (attr for attr, value in attrs.items() if value is True).__next__()
+        except Exception:
+            attr = None
+        finally:
+            return attr
