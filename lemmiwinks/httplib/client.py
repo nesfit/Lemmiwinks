@@ -58,8 +58,7 @@ class AIOClient(abstract.AsyncClient):
         url_and_status.append((str(response.url), response.status))
         return url_and_status
 
-    @staticmethod
-    async def __get_content_descriptor_from(response):
+    async def __get_content_descriptor_from(self, response):
         content_descriptor = tempfile.NamedTemporaryFile()
 
         async for data in response.content.iter_chunked(self.__chunk_size):
