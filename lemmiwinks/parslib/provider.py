@@ -14,7 +14,7 @@ class CSSParserProvider:
             else:
                 css_parser = CSSParserProvider.__create_tynicss_stylesheet(data)
         except Exception as e:
-            print(f"error: {e}")
+            logging.error(f"CSSParserProvider error: {e}")
         else:
             return parser.TinyCSSParser(css_parser)
 
