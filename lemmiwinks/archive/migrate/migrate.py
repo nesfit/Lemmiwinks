@@ -1,8 +1,10 @@
 import asyncio
 import logging
 import urllib.parse
-
 import pathlib
+
+import dependency_injector.providers as di_provider
+
 import httplib
 import singleton
 
@@ -15,16 +17,16 @@ class SrcRegister(dict, metaclass=singleton.ThreadSafeSingleton):
 
 
 class UpdateTokenValue(abstract.UpdateEntity):
-    def __init__(self, resolver):
+    def __init__(self, resolver, path_gen):
         super().__init__()
         self.__resolver = resolver
-        self.__src_register = SrcRegister()
+        self.__path_gen = path_gen
 
     def _get_data_from(self, entity, **kwargs):
         return self.__resolver.resolve(entity.value)
 
     def _update_entity(self, data, entity, **kwargs):
-        entity.value = data
+        entity.value = self.__path_gen.get_relpath_from(data)
 
 
 class UpdateElementString(abstract.UpdateEntity):
@@ -50,15 +52,16 @@ class UpdateElementAttribute(abstract.UpdateEntity):
 
 
 class UpdateElementAttributeSource(abstract.UpdateEntity):
-    def __init__(self, resolver):
+    def __init__(self, resolver, path_gen):
         super().__init__()
         self.__resolver = resolver
+        self.__path_gen = path_gen
 
     def _get_data_from(self, entity, **kwargs):
         return self.__resolver.resolve(entity[kwargs["attr"]])
 
     def _update_entity(self, data, entity, **kwargs):
-        entity[kwargs["attr"]] = data
+        entity[kwargs["attr"]] = self.__path_gen.get_relpath_from(data)
 
 
 class DownloadHandler(abstract.DataHandler):
@@ -73,10 +76,10 @@ class DownloadHandler(abstract.DataHandler):
             if url not in self.__src_register.keys():
                 await self.__download(url)
 
-            path = self.__src_register.get(url).relpath
+            path = self.__src_register.get(url)
         except Exception as e:
             self.__log_error(e=e, url=url)
-            return None
+            return ""
         else:
             return path
 
@@ -87,7 +90,7 @@ class DownloadHandler(abstract.DataHandler):
     async def __download(self, url):
         try:
             self.__register_path_for_url(url)
-            path = self.__src_register.get(url).abspath
+            path = self.__src_register.get(url)
             await self.__downloader.download(url, path)
         except Exception as e:
             self.__log_error(e=e, url=url)
@@ -126,17 +129,15 @@ class _RecursiveEntityHandler(abstract.DataHandler):
         try:
             if url not in self._src_register.keys():
                 await self.__migrate_entity_from(url)
-
-            path = self._src_register.get(url).relpath
         except Exception as e:
             self.__log_error(e=e, url=url)
-            return None
-        else:
-            return path
+        finally:
+            return self._src_register.get(url)
 
     async def __migrate_entity_from(self, url):
         self._register_path_for(url)
         response = await self._get_response_from(url)
+        self._update_path_for(url, response.accessed_url, response.requested_url)
         await self.__process_response(response)
 
     def __log_error(self, **kwargs):
@@ -146,6 +147,11 @@ class _RecursiveEntityHandler(abstract.DataHandler):
 
     def _register_path_for(self, url):
         raise NotImplemented
+
+    def _update_path_for(self, urlkey, accessed_url, requested_url):
+        path = self._src_register.get(urlkey)
+        self._src_register.update({accessed_url: path})
+        self._src_register.update({requested_url: path})
 
     async def _get_response_from(self, url):
         raise NotImplemented
@@ -161,7 +167,7 @@ class _RecursiveEntityHandler(abstract.DataHandler):
 
     def __save_response(self, response):
         url = response.requested_url
-        path = self._src_register.get(url).abspath
+        path = self._src_register.get(url)
 
         with open(path, "wb") as fd:
             fd.write(response.content_descriptor.read())
@@ -183,7 +189,7 @@ class CSSFileHandler(_RecursiveEntityHandler):
 
     async def _process_entity_recursively_from(self, response):
         url = response.requested_url
-        path = self._src_register.get(url).abspath
+        path = self._src_register.get(url)
 
         css_file = CssFile(response, path,
                            self.__settings, self._recursion_limit - 1)
@@ -196,45 +202,64 @@ class _HTMLEntityHandler(_RecursiveEntityHandler):
     def __init__(self, entity_property, settings):
         super().__init__(entity_property.recursion_limit)
         self.__path_gen = entity_property.path_gen
-        self.__resource_location = entity_property.resource_location
-        self.__settings = settings
 
     def _register_path_for(self, url):
-        url_path = urllib.parse.urlparse(url).path
         path = self.__path_gen.generate_filepath_with(".html")
         self._src_register.update({url: path})
-
-    async def _process_entity_recursively_from(self, response):
-        url = response.requested_url
-        path = self._src_register.get(url).abspath
-
-        index_file = IndexFile(response, path, self.__resource_location,
-                               self.__settings, self._recursion_limit)
-
-        await index_file.migrate_external_sources()
-        index_file.export()
 
 
 class HTMLFileWithJsExecutionHandler(_HTMLEntityHandler):
     def __init__(self, entity_property, settings):
         super().__init__(entity_property, settings)
         self.__http_js_pool = settings.http_js_pool()
+        self.__resource_location = entity_property.resource_location
+        self.__settings = settings
 
     async def _get_response_from(self, url):
-        client = self.__http_js_pool.acquire()
+        client = await self.__http_js_pool.acquire()
         response = await client.get_request(url)
         self.__http_js_pool.release(client)
 
         return response
+
+    async def _process_entity_recursively_from(self, response):
+        url = response.accessed_url
+        path = self._src_register.get(url)
+
+        index_file = IndexFileContainer.index_file_with_js_execution(
+            response=response,
+            filepath=path,
+            res_location=self.__resource_location,
+            settings=self.__settings,
+            recursion_limit=self._recursion_limit)
+
+        await index_file.migrate_external_sources()
+        index_file.export()
 
 
 class HTMLFileHandler(_HTMLEntityHandler):
     def __init__(self, entity_property, settings):
         super().__init__(entity_property, settings)
         self.__client = settings.http_client()
+        self.__resource_location = entity_property.resource_location
+        self.__settings = settings
 
     async def _get_response_from(self, url):
         return await self.__client.get_request(url)
+
+    async def _process_entity_recursively_from(self, response):
+        url = response.requested_url
+        path = self._src_register.get(url)
+
+        index_file = IndexFileContainer.index_file(
+            response=response,
+            filepath=path,
+            res_location=self.__resource_location,
+            settings=self.__settings,
+            recursion_limit=self._recursion_limit)
+
+        await index_file.migrate_external_sources()
+        index_file.export()
 
 
 class CssStyleHandler(abstract.DataHandler):
@@ -279,8 +304,8 @@ class JSFileHandler(abstract.DataHandler):
 
     async def process(self, data):
         path = self.__path_gen.generate_filepath_with(".js")
-        pathlib.Path(path.abspath).touch()
-        return path.relpath
+        pathlib.Path(path).touch()
+        return path
 
 
 class InlineJSHandler(abstract.DataHandler):
@@ -288,14 +313,15 @@ class InlineJSHandler(abstract.DataHandler):
         pass
 
     async def process(self, data):
-        return None
+        return ""
 
 
 class _BaseElementTaskContainer:
     def __init__(self, entity_property, settings):
         self._element_string_updater = UpdateElementString()
         self._element_attr_updater = UpdateElementAttribute()
-        self._element_src_attr_updater = UpdateElementAttributeSource(entity_property.resolver)
+        self._element_src_attr_updater = UpdateElementAttributeSource(
+            entity_property.resolver, entity_property.path_gen)
 
         self._download_source = DownloadHandler(entity_property, settings)
         self._css_file_handler = CSSFileHandler(entity_property, settings)
@@ -344,10 +370,10 @@ class ElementTaskContainerWithJsExecution(_BaseElementTaskContainer):
 
     def update_inline_script(self, element):
         return self._element_string_updater.update_entity(
-            self._js_file_handler, element)
+            self._inline_js_handler, element)
 
     def update_event_attr(self, element, attr):
-        return self._element_src_attr_updater.update_entity(
+        return self._element_attr_updater.update_entity(
             self._inline_js_handler, element, attr=attr)
 
     def update_iframe_source(self, element, attr):
@@ -357,7 +383,8 @@ class ElementTaskContainerWithJsExecution(_BaseElementTaskContainer):
 
 class TokenTaskContainer:
     def __init__(self, entity_property, settings):
-        self.__token_value_updater = UpdateTokenValue(entity_property.resolver)
+        self.__token_value_updater = UpdateTokenValue(
+            entity_property.resolver, entity_property.path_gen)
 
         self.__download_token = DownloadHandler(entity_property, settings)
         self.__css_file_handler = CSSFileHandler(entity_property, settings)
@@ -392,7 +419,7 @@ class CSSMigration(abstract.BaseMigration):
 
 
 class _BaseHTMLMigration:
-    def __init__(self, index_entity, task, settings):
+    def __init__(self, index_entity, task):
         self._html_filter = container.HTMLFilter(index_entity.parser)
         self._task = task
 
@@ -435,7 +462,7 @@ class _BaseHTMLMigration:
 class HTMLMigration(_BaseHTMLMigration, abstract.BaseMigration):
     def __init__(self, index_entity, settings):
         task = ElementTaskContainer(index_entity, settings)
-        super().__init__(index_entity, task, settings)
+        super().__init__(index_entity, task)
 
     async def migrate(self):
         await asyncio.gather(self._migrate_html_elements_sources(),
@@ -456,7 +483,7 @@ class HTMLMigration(_BaseHTMLMigration, abstract.BaseMigration):
 class HTMLMigrationWithJSExecution(_BaseHTMLMigration, abstract.BaseMigration):
     def __init__(self, index_entity, settings):
         task = ElementTaskContainerWithJsExecution(index_entity, settings)
-        super().__init__(index_entity, task, settings)
+        super().__init__(index_entity, task)
 
     async def migrate(self):
         await asyncio.gather(self._migrate_html_elements_sources(),
@@ -464,10 +491,9 @@ class HTMLMigrationWithJSExecution(_BaseHTMLMigration, abstract.BaseMigration):
                              self._migrate_css_style(),
                              self._migrate_css_declaration(),
                              self._migrate_script_source(),
-                             self._migrate_iframes(),
-                             self._migrate_script_source(),
                              self._migrate_js_events(),
-                             self._migrate_inline_script())
+                             self._migrate_inline_script(),
+                             self._migrate_iframes())
 
     @abstract._task
     async def _migrate_script_source(self):
@@ -558,20 +584,20 @@ class CSSDeclaration(abstract.BaseEntity):
 
 
 class IndexFile(abstract.BaseEntity):
-    def __init__(self, response, filepath, res_location, settings, recursion_limit=3):
+    def __init__(self, response, filepath, res_location, settings, migration, recursion_limit=3):
         self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._filepath = filepath
         self._settings = settings
-
-        essential_location = pathlib.Path(filepath).parent
         self.__parser = settings.html_parser(response.content_descriptor)
+
+        index_location = pathlib.Path(filepath).parent
         resolver = self.__init_resolver(response.accessed_url)
-        path_gen = settings.path_gen(res_location, essential_location)
+        path_gen = settings.path_gen(res_location, index_location)
 
         super().__init__(self.__parser, resolver, path_gen,
-                         essential_location, res_location, recursion_limit)
+                         index_location, res_location, recursion_limit)
 
-        self._html_migration = HTMLMigration(self, settings)
+        self._html_migration = migration(self, settings)
         del self.parser.base
 
     def __init_resolver(self, url):
@@ -579,8 +605,8 @@ class IndexFile(abstract.BaseEntity):
 
         try:
             resolver.base = resolver.resolve(self.__parser.base["href"])
-        except Exception:
-            pass
+        except Exception as e:
+            self._logger.info(e)
         finally:
             return resolver
 
@@ -590,3 +616,10 @@ class IndexFile(abstract.BaseEntity):
     def export(self):
         with open(self._filepath, "wb") as fd:
             fd.write(self.parser.export())
+
+
+class IndexFileContainer:
+    index_file = di_provider.Factory(IndexFile, migration=HTMLMigration)
+
+    index_file_with_js_execution = di_provider.Factory(
+        IndexFile, migration=HTMLMigrationWithJSExecution)
