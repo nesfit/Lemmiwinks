@@ -8,11 +8,29 @@ class ElementFilterRules:
                          "object": [{"data": True}, {"codebase": True}],
                          "track": [{"src": True}]}
     __stylesheet_link = {"link": [{"href": True, "rel": "stylesheet"}]}
-    __js_style = {"script": [{"src": True}]}
+    __js_script = {"script": [{"src": True}]}
+    __script = {"script": [None]}
     __style = {"style": [None]}
     __description_style = {True: [{"style": True}]}
     __frames = {"frame": [{"src": True}],
                 "iframe": [{"src": True}]}
+    __events = ["onafterprint", "onbeforeprint", "onbeforeunload", "onerror",
+                "onhashchange", "onload", "onmessage", "onoffline", "ononline",
+                "onpagehide", "onpageshow", "onpopstate", "onresize",
+                "onstorage", "onunload", "onblur", "onchange", "oncontextmenu",
+                "onfocus", "oninput", "oninvalid", "onreset", "onsearch",
+                "onselect", "onsubmit", "onkeydown", "onkeypress", "onkeyup",
+                "onclick", "ondblclick", "onmousedown", "onmousemove",
+                "onmouseout", "onmouseover", "onmouseup", "onmousewheel",
+                "onwheel", "ondrag", "ondragend", "ondragenter", "ondragleave",
+                "ondragover", "ondragstart", "ondrop", "onscroll", "oncopy",
+                "oncut", "onpaste", "onabort", "oncanplay", "oncanplaythrough",
+                "oncuechange", "ondurationchange", "onemptied", "onended",
+                "onerror", "onloadeddata", "onloadedmetadata", "onloadstart",
+                "onpause", "onplay", "onplaying", "onprogress", "onratechange",
+                "onseeked", "onseeking", "onstalled", "onsuspend",
+                "ontimeupdate", "onvolumechange", "onwaiting", "onshow",
+                "ontoggle"]
 
     @property
     def elements(self):
@@ -23,8 +41,16 @@ class ElementFilterRules:
         return self.__flatten(ElementFilterRules.__stylesheet_link)
 
     @property
-    def js_style(self):
-        return self.__flatten(ElementFilterRules.__js_style)
+    def js_script(self):
+        return self.__flatten(ElementFilterRules.__js_script)
+
+    @property
+    def script(self):
+        return self.__flatten(ElementFilterRules.__script)
+
+    @property
+    def events(self):
+        return self.__format_events(ElementFilterRules.__events)
 
     @property
     def style(self):
@@ -40,8 +66,14 @@ class ElementFilterRules:
 
     @staticmethod
     def __flatten(rules):
-        flatten_rules = [(name, attr) for name, attrs in rules.items() for attr in attrs]
+        flatten_rules = [(element_name, attr_dict) for element_name, attr_list in rules.items()
+                         for attr_dict in attr_list]
         return flatten_rules
+
+    @staticmethod
+    def __format_events(event_list):
+        formatted_rules = [(True, {attr_name: True}) for attr_name in event_list]
+        return formatted_rules
 
 
 class HTMLFilter:
@@ -58,8 +90,16 @@ class HTMLFilter:
         return self.__get_element_list_from(self._filter_rules.stylesheet_link)
 
     @property
-    def js_style(self):
-        return self.__get_element_list_from(self._filter_rules.js_style)
+    def js_script(self):
+        return self.__get_element_list_from(self._filter_rules.js_script)
+
+    @property
+    def script(self):
+        return self.__get_element_list_from(self._filter_rules.script)
+
+    @property
+    def elements_event(self):
+        return self.__get_element_list_from(self._filter_rules.events)
 
     @property
     def style(self):

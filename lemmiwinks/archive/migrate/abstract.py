@@ -10,7 +10,7 @@ def _task(func):
     return wrapper
 
 
-class BaseMigrate(metaclass=abc.ABCMeta):
+class BaseMigration(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def migrate(self):
         raise NotImplemented()
@@ -30,8 +30,8 @@ class UpdateEntity(metaclass=abc.ABCMeta):
     async def update_entity(self, handler, entity, **kwargs):
         try:
             data = self._get_data_from(entity, **kwargs)
-            nwe_data = await handler.process(data)
-            self._update_entity(nwe_data, entity, **kwargs)
+            new_data = await handler.process(data)
+            self._update_entity(new_data, entity, **kwargs)
         except Exception as e:
             self._logger.exception(e)
             self._logger.error(e)
@@ -83,10 +83,11 @@ class BaseProperty(metaclass=abc.ABCMeta):
 
 
 class BaseEntity(metaclass=abc.ABCMeta):
-    def __init__(self, parser, resolver, path_gen, entity_location,
-                 resource_location, recursion_limit):
-        self.__property = BaseProperty(parser, resolver, path_gen, entity_location,
-                                       resource_location, recursion_limit)
+    def __init__(self, parser, resolver, path_gen,
+                 entity_location, resource_location, recursion_limit):
+
+        self.__property = BaseProperty(
+            parser, resolver, path_gen, entity_location, resource_location, recursion_limit)
 
     def __getattr__(self, item):
         return getattr(self.__property, item)
