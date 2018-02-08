@@ -1,9 +1,6 @@
 import pathlib
 import uuid
-import collections
-
-Path = collections.namedtuple('Path', 'abspath relpath')
-
+import logging
 
 class DirectoryWrapper:
     def __init__(self, location: str):
@@ -34,17 +31,23 @@ class DirectoryWrapper:
 
 class FilePathGenerator:
     def __init__(self, directory: object, path_prefix: str):
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._directory = directory
         self._path_prefix = path_prefix
 
-    def generate_filepath_with(self, extension: str) -> Path:
+    def generate_filepath_with(self, extension: str) -> str:
+        abs_path = self.__generate_abs_filepath_with(extension)
+        return str(abs_path)
+
+    def get_relpath_from(self, abs_path: str) -> str:
         try:
-            abs_path = self.__generate_abs_filepath_with(extension)
-            rel_path = abs_path.relative_to(self._path_prefix)
-        except ValueError:
-            rel_path = abs_path
+            relpath = str(pathlib.Path(abs_path).relative_to(self._path_prefix))
+        except Exception as e:
+            self._logger.exception(e)
+            self._logger.error(f"absolute path: {abs_path}")
+            relpath = abs_path
         finally:
-            return Path(abspath=str(abs_path), relpath=str(rel_path))
+            return relpath
 
     def __generate_abs_filepath_with(self, extension: str) -> pathlib.Path:
         return self._directory.get_filepath_with(extension)
