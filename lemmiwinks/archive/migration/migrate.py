@@ -216,9 +216,8 @@ class HTMLFileWithJsExecutionHandler(_HTMLEntityHandler):
         self.__settings = settings
 
     async def _get_response_from(self, url):
-        client = await self.__http_js_pool.acquire()
-        response = await client.get_request(url)
-        self.__http_js_pool.release(client)
+        async with self.__http_js_pool.get_client() as client:
+            response = await client.get_request(url)
 
         return response
 

@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import asyncio_extras
 
 # third party imports
 import dependency_injector.providers as providers
@@ -91,6 +92,14 @@ class ClientPool(metaclass=singleton.ThreadSafeSingleton):
             instance = self.__acquire_instance()
 
         return instance
+
+    @asyncio_extras.async_contextmanager
+    async def get_client(self):
+        try:
+            http_client = await self.acquire()
+            yield http_client
+        finally:
+            self.release(http_client)
 
     def __acquire_instance(self):
         if self.__is_instance_awaliable():
