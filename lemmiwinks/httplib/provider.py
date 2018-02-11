@@ -105,7 +105,6 @@ class ClientPool(metaclass=singleton.ThreadSafeSingleton):
         if self.__is_instance_awaliable():
             instance = self.__get_awaliable_instance()
             self.__update_instance_state_to(instance, InstanceStatus.RESERVED)
-        # create new a instance and assign it to the dictionary
         else:
             instance = self._factory.client(**self._kwargs)
             self.__update_instance_state_to(instance, InstanceStatus.RESERVED)
