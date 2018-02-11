@@ -606,8 +606,8 @@ class IndexFile(abstract.BaseEntity):
             resolver.base = resolver.resolve(self.__parser.base["href"])
         except Exception as e:
             self._logger.info(e)
-        finally:
-            return resolver
+
+        return resolver
 
     async def migrate_external_sources(self):
         await self._html_migration.migrate()

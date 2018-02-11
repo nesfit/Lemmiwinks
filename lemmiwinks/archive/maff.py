@@ -2,6 +2,7 @@ import tempfile
 import logging
 import zipfile
 import os
+import pathlib
 import xml.etree.ElementTree as ET
 
 
@@ -18,7 +19,8 @@ class MozillaArchiveFormat:
 
     def create_tab(self):
         tab = tempfile.TemporaryDirectory()
-        self._tabs.append(tab.name)
+        self._tabs.append(tab)
+
         return tab.name
 
     def make_archive(self):
@@ -29,10 +31,10 @@ class MozillaArchiveFormat:
 
     def __zip_directory_to(self, zip_file):
         for tab in self._tabs:
-            for dirpath, _, file_names in os.walk(tab):
+            for dirpath, _, file_names in os.walk(tab.name):
                 for file_name in file_names:
                     filepath = os.path.join(dirpath, file_name)
-                    arcname = os.path.relpath(filepath, os.path.dirname(tab))
+                    arcname = os.path.relpath(filepath, os.path.dirname(tab.name))
                     zip_file.write(filepath, arcname)
 
 
@@ -40,9 +42,9 @@ class RDF:
     def __init__(self, filepath):
         self._filepath = filepath
         self._xml = None
-        self._desc = None
+        self._description = None
         self.__init_xml()
-        self.__init_desc()
+        self.__init_description()
 
     def __enter__(self):
         return self
@@ -59,9 +61,9 @@ class RDF:
         self._xml.set("xmlns:NC", "http://home.netscape.com/NC-rdf#")
         self._xml.set("xmlns:RDF", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 
-    def __init_desc(self):
-        self._desc = ET.SubElement(self._xml, "RDF:Description")
-        self._desc.set("RDF:about", "urn:root")
+    def __init_description(self):
+        self._description = ET.SubElement(self._xml, "RDF:Description")
+        self._description.set("RDF:about", "urn:root")
 
     @property
     def url(self) -> str:
@@ -111,17 +113,17 @@ class RDF:
             return None
 
     def __find_element_by(self, tag: str):
-        return self._desc.find(tag)
+        return self._description.find(tag)
 
     def __update_element(self, tag: str, value: str):
         try:
             element = self.__find_element_by(tag)
             element.set("RDF:resource", value)
         except AttributeError:
-            self.__add_node(tag, value)
+            self.__create_node(tag, value)
 
-    def __add_node(self, tag: str, attr_value: str):
-        ET.SubElement(self._desc, tag, {"RDF:resource": attr_value})
+    def __create_node(self, tag: str, attr_value: str):
+        ET.SubElement(self._description, tag, {"RDF:resource": attr_value})
 
     def save(self):
         element_tree = ET.ElementTree(element=self._xml)
