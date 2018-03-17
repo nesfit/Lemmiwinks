@@ -3,18 +3,19 @@
 import argparse
 import asyncio
 import lemmiwinks
-import taskwrapper as taskwrapper
-import archive.migration as migration
-import httplib as httplib
-import pathgen as pathgen
-import parslib as parslib
-import archive as archive
+import lemmiwinks.taskwrapper as taskwrapper
+import lemmiwinks.archive.migration as migration
+import lemmiwinks.httplib as httplib
+import lemmiwinks.pathgen as pathgen
+import lemmiwinks.parslib as parslib
+import lemmiwinks.archive as archive
 import logging
 import enum
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M')
+
 
 class ArchiveSettings(migration.MigrationSettings):
     http_client = httplib.provider.ClientFactoryProvider.aio_factory.singleton_client
