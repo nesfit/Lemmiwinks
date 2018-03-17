@@ -79,12 +79,10 @@ class AIOClient(abstract.AsyncClient):
 
 
 class SeleniumClient(abstract.AsyncJsClient):
-    def __init__(self, executor_url: str, browser_info, cookies=dict(), timeout=3):
+    def __init__(self, executor_url: str, browser_info, timeout=3, cookies=dict()):
         super().__init__("{}.{}".format(__name__, self.__class__.__name__))
         self.__timeout = timeout
-
         self.cookies = cookies
-
         self.__driver = webdriver.Remote(
             command_executor=executor_url,
             desired_capabilities=browser_info)
