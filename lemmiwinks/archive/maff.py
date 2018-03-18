@@ -2,7 +2,6 @@ import tempfile
 import logging
 import zipfile
 import os
-import pathlib
 import xml.etree.ElementTree as ET
 
 

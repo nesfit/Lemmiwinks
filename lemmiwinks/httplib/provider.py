@@ -11,7 +11,7 @@ from selenium.webdriver import DesiredCapabilities
 from . import client
 from . import exception
 from .container import InstanceStatus
-import singleton as singleton
+import lemmiwinks.singleton as singleton
 
 
 class ClientFactory:

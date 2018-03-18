@@ -1,5 +1,5 @@
 import pathlib
-import pathgen
+import lemmiwinks.pathgen as pathgen
 import logging
 import urllib.parse
 from time import strftime, localtime

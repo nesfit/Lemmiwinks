@@ -1,8 +1,7 @@
 import abc
 import logging
-import asyncio
 
-import taskwrapper
+import lemmiwinks.taskwrapper as taskwrapper
 
 
 class BaseMigration(metaclass=abc.ABCMeta):

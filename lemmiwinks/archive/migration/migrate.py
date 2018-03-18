@@ -5,9 +5,9 @@ import pathlib
 
 import dependency_injector.providers as di_provider
 
-import httplib
-import singleton
-import taskwrapper
+import lemmiwinks.httplib as httplib
+import lemmiwinks.singleton as singleton
+import lemmiwinks.taskwrapper as taskwrapper
 
 from . import abstract
 from . import container
