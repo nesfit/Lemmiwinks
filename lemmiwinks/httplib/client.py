@@ -86,6 +86,7 @@ class SeleniumClient(abstract.AsyncJsClient):
         self.__driver = webdriver.Remote(
             command_executor=executor_url,
             desired_capabilities=browser_info)
+        self.__driver.set_window_size(1920, 1080)
 
     def __del__(self):
         self.__driver.close()

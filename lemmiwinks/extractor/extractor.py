@@ -1,13 +1,20 @@
-import parser
+import re
 
-class RegexExtractorRule:
-    def __init__(self, rule):
-        self.__rule = rule
+import lemmiwinks.parslib as parslib
 
-    def __getattr__(self, item):
-        return getattr(self.__rule, item)
+from . import abstract
 
 
-class Extractor:
-    def __init__(self, rules):
-        self.__rules = rules
+class RegexExtractor(abstract.BaseExtractor):
+    def __init__(self, pattern, pattern_name, document):
+        self.__document = document
+        self.__pattern = pattern
+        self.__pattern_name = pattern_name
+
+    def __del__(self):
+        self.__document.seek(0)
+
+    def extract(self):
+        parser = parslib.HTMLParserProvider.bs_parser(self.__document)
+        matches = re.findall(self.__pattern, parser.text)
+        return self.__pattern_name, matches

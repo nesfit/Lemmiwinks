@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from setuptools.command import build_py
 
 setup(name='lemmiwinks',
       vesrion='0.0.1',
@@ -22,6 +21,7 @@ setup(name='lemmiwinks',
           'beautifulsoup4>=4.6.0',
           'asyncio-extras>=1.3.0',
           'lxml>=4.2.0',
+          'Jinja2>=2.10',
       ],
       include_package_data=True,
       zip_safe=False,
