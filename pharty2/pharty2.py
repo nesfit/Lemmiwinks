@@ -1,6 +1,5 @@
 #!/usr/bin/env python3.6
 # standard library imports
-import json
 import ast
 import sys
 import asyncio
@@ -74,7 +73,7 @@ class AIOPharty(lemmiwinks.Lemmiwinks):
 
         # JS Pool has to be initialized
         self.__pool = self.__settings.http_js_pool(
-            factory=httplib.ClientFactoryProvider.chrome_factory,
+            factory=httplib.ClientFactoryProvider.firefox_factory,
             executor_url=executor_url,
         )
 
@@ -186,7 +185,7 @@ class CMDInput:
 
 def main():
     cmd = CMDInput()
-    aio_pharty = AIOPharty(cmd.url, cmd.location, cmd.regex_list, "http://localhost:8910")
+    aio_pharty = AIOPharty(cmd.url, cmd.location, cmd.regex_list, "http://lemmiNET:4444/wd/hub")
     aio_pharty.run()
     print(aio_pharty.meta_info)
 

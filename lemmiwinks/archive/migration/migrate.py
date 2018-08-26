@@ -200,7 +200,7 @@ class CSSFileHandler(_RecursiveEntityHandler):
 
 
 class _HTMLEntityHandler(_RecursiveEntityHandler):
-    def __init__(self, entity_property, settings):
+    def __init__(self, entity_property):
         super().__init__(entity_property.recursion_limit)
         self.__path_gen = entity_property.path_gen
 
@@ -211,7 +211,7 @@ class _HTMLEntityHandler(_RecursiveEntityHandler):
 
 class HTMLFileWithJsExecutionHandler(_HTMLEntityHandler):
     def __init__(self, entity_property, settings):
-        super().__init__(entity_property, settings)
+        super().__init__(entity_property)
         self.__http_js_pool = settings.http_js_pool()
         self.__resource_location = entity_property.resource_location
         self.__settings = settings
@@ -239,7 +239,7 @@ class HTMLFileWithJsExecutionHandler(_HTMLEntityHandler):
 
 class HTMLFileHandler(_HTMLEntityHandler):
     def __init__(self, entity_property, settings):
-        super().__init__(entity_property, settings)
+        super().__init__(entity_property)
         self.__client = settings.http_client()
         self.__resource_location = entity_property.resource_location
         self.__settings = settings

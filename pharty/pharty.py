@@ -35,8 +35,8 @@ class AIOLemmiwinks(lemmiwinks.Lemmiwinks):
     def __init__(self, url, archive_name, mode):
 
         if mode == LemiMode.JS:
-            self.__pool = httplib.ClientPool(httplib.ClientFactoryProvider.chrome_factory,
-                                             executor_url="http://localhost:4444/wd/hub")
+            self.__pool = httplib.ClientPool(httplib.ClientFactoryProvider.firefox_factory,
+                                             executor_url="http://liemmiNET:4444/wd/hub")
 
         self.__client = httplib.ClientFactoryProvider.aio_factory.singleton_client(pool_limit=500,
                                                                                    timeout=10)
