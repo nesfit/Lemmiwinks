@@ -185,7 +185,7 @@ class CMDInput:
 
 def main():
     cmd = CMDInput()
-    aio_pharty = AIOPharty(cmd.url, cmd.location, cmd.regex_list, "http://firefox:4444/wd/hub")
+    aio_pharty = AIOPharty(cmd.url, cmd.location, cmd.regex_list, "http://localhost:4444/wd/hub")
     aio_pharty.run()
     print(aio_pharty.meta_info)
 
