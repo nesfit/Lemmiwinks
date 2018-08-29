@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M')
 
-BASE_LOCATION = '/home/coon/PycharmProjects/lemmiwinks/pharty2'
+BASE_LOCATION = '/Lemmiwinks/pharty2'
 
 
 class WebPageScreenshotLetter(archive.abstract.BaseLetter):
