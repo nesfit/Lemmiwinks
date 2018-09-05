@@ -11,7 +11,7 @@ from selenium.webdriver import DesiredCapabilities
 from . import client
 from . import exception
 from .container import InstanceStatus
-import singleton as singleton
+import lemmiwinks.singleton as singleton
 
 
 class ClientFactory:
@@ -86,13 +86,6 @@ class ClientPool(metaclass=singleton.ThreadSafeSingleton):
         for key in self._assign_dict:
             del key
 
-    async def acquire(self):
-        await self._semaphore.acquire()
-        with await self._lock:
-            instance = self.__acquire_instance()
-
-        return instance
-
     @asyncio_extras.async_contextmanager
     async def get_client(self):
         try:
@@ -100,6 +93,13 @@ class ClientPool(metaclass=singleton.ThreadSafeSingleton):
             yield http_client
         finally:
             self.release(http_client)
+
+    async def acquire(self):
+        await self._semaphore.acquire()
+        with await self._lock:
+            instance = self.__acquire_instance()
+
+        return instance
 
     def __acquire_instance(self):
         if self.__is_instance_awaliable():

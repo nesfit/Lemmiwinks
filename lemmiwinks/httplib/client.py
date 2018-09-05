@@ -79,14 +79,14 @@ class AIOClient(abstract.AsyncClient):
 
 
 class SeleniumClient(abstract.AsyncJsClient):
-    def __init__(self, executor_url: str, browser_info, cookies=dict()):
+    def __init__(self, executor_url: str, browser_info, timeout=3, cookies=dict()):
         super().__init__("{}.{}".format(__name__, self.__class__.__name__))
-
+        self.__timeout = timeout
         self.cookies = cookies
-
         self.__driver = webdriver.Remote(
             command_executor=executor_url,
             desired_capabilities=browser_info)
+        self.__driver.set_window_size(1920, 1080)
 
     def __del__(self):
         self.__driver.close()
@@ -94,10 +94,6 @@ class SeleniumClient(abstract.AsyncJsClient):
     @abstract.AsyncJsClient.cookies.setter
     def cookies(self, cookies: dict):
         self._cookies = cookies
-
-    def get(self, url):
-        self.__driver.get(url)
-        return self.__driver.page_source
 
     async def get_request(self, url):
         try:
@@ -112,7 +108,7 @@ class SeleniumClient(abstract.AsyncJsClient):
     async def __send_request(self, url):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self.__driver.get, url)
-        await asyncio.sleep(3)
+        await asyncio.sleep(self.__timeout)
 
     def __get_response(self):
         content_descriptor = self.__get_content_descriptor()

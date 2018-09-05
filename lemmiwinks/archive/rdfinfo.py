@@ -1,5 +1,5 @@
 import pathlib
-import pathgen
+import lemmiwinks.pathgen as pathgen
 import logging
 import urllib.parse
 from time import strftime, localtime
@@ -60,6 +60,10 @@ class ParserMaffRDFInfo:
     def title(self):
         try:
             title = self.__parser.title.string
+
+            if title is None:
+                title = ""
+
         except Exception as e:
             self.__logger.exception(e)
             return ""
@@ -70,6 +74,10 @@ class ParserMaffRDFInfo:
     def charset(self):
         try:
             charset = self.__parser.charset
+
+            if charset is None:
+                charset = ""
+
         except Exception as e:
             self.__logger.exception(e)
             return ""

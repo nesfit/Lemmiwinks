@@ -1,13 +1,7 @@
 import abc
 import logging
-import asyncio
 
-
-def _task(func):
-    def wrapper(*args, **kwargs):
-        task = asyncio.get_event_loop().create_task(func(*args, **kwargs))
-        return task
-    return wrapper
+import lemmiwinks.taskwrapper as taskwrapper
 
 
 class BaseMigration(metaclass=abc.ABCMeta):
@@ -26,7 +20,7 @@ class UpdateEntity(metaclass=abc.ABCMeta):
     def __init__(self):
         self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    @_task
+    @taskwrapper.task
     async def update_entity(self, handler, entity, **kwargs):
         try:
             data = self._get_data_from(entity, **kwargs)

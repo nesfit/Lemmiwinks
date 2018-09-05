@@ -5,8 +5,9 @@ import pathlib
 
 import dependency_injector.providers as di_provider
 
-import httplib
-import singleton
+import lemmiwinks.httplib as httplib
+import lemmiwinks.singleton as singleton
+import lemmiwinks.taskwrapper as taskwrapper
 
 from . import abstract
 from . import container
@@ -199,7 +200,7 @@ class CSSFileHandler(_RecursiveEntityHandler):
 
 
 class _HTMLEntityHandler(_RecursiveEntityHandler):
-    def __init__(self, entity_property, settings):
+    def __init__(self, entity_property):
         super().__init__(entity_property.recursion_limit)
         self.__path_gen = entity_property.path_gen
 
@@ -210,7 +211,7 @@ class _HTMLEntityHandler(_RecursiveEntityHandler):
 
 class HTMLFileWithJsExecutionHandler(_HTMLEntityHandler):
     def __init__(self, entity_property, settings):
-        super().__init__(entity_property, settings)
+        super().__init__(entity_property)
         self.__http_js_pool = settings.http_js_pool()
         self.__resource_location = entity_property.resource_location
         self.__settings = settings
@@ -238,7 +239,7 @@ class HTMLFileWithJsExecutionHandler(_HTMLEntityHandler):
 
 class HTMLFileHandler(_HTMLEntityHandler):
     def __init__(self, entity_property, settings):
-        super().__init__(entity_property, settings)
+        super().__init__(entity_property)
         self.__client = settings.http_client()
         self.__resource_location = entity_property.resource_location
         self.__settings = settings
@@ -404,13 +405,13 @@ class CSSMigration(abstract.BaseMigration):
         await asyncio.gather(self.__update_url_tokens(),
                              self.__update_import_tokens())
 
-    @abstract._task
+    @taskwrapper.task
     async def __update_url_tokens(self):
         tasks = [self.__task.update_url_token(token)
                  for token in self.__css_entity.parser.url_tokens]
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def __update_import_tokens(self):
         tasks = [self.__task.update_import_token(token)
                  for token in self.__css_entity.parser.import_tokens]
@@ -422,35 +423,35 @@ class _BaseHTMLMigration:
         self._html_filter = container.HTMLFilter(index_entity.parser)
         self._task = task
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_html_elements_sources(self):
         tasks = [self._task.update_source_attr(element, attr)
                  for element, attr in self._html_filter.elements]
 
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_css_file(self):
         tasks = [self._task.update_link_stylesheet_ref(element, attr)
                  for element, attr in self._html_filter.stylesheet_link]
 
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_css_style(self):
         tasks = [self._task.update_css_style(element)
                  for element, _ in self._html_filter.style]
 
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_css_declaration(self):
         tasks = [self._task.update_css_declaration(element, attr)
                  for element, attr in self._html_filter.description_style]
 
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_iframes(self):
         tasks = [self._task.update_iframe_source(element, attr)
                  for element, attr in self._html_filter.frames]
@@ -471,7 +472,7 @@ class HTMLMigration(_BaseHTMLMigration, abstract.BaseMigration):
                              self._migrate_script_source(),
                              self._migrate_iframes())
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_script_source(self):
         tasks = [self._task.update_source_attr(element, attr)
                  for element, attr in self._html_filter.js_script]
@@ -494,21 +495,21 @@ class HTMLMigrationWithJSExecution(_BaseHTMLMigration, abstract.BaseMigration):
                              self._migrate_inline_script(),
                              self._migrate_iframes())
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_script_source(self):
         tasks = [self._task.update_script_source(element, attr)
                  for element, attr in self._html_filter.js_script]
 
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_js_events(self):
         tasks = [self._task.update_event_attr(element, attr)
                  for element, attr in self._html_filter.elements_event]
 
         await asyncio.gather(*tasks)
 
-    @abstract._task
+    @taskwrapper.task
     async def _migrate_inline_script(self):
         tasks = [self._task.update_inline_script(element)
                  for element, _ in self._html_filter.script]

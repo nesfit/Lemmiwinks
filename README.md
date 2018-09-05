@@ -1,5 +1,5 @@
 # Lemmiwinks
-Lemmiwinks: Web Crawler
+Lemmiwinks: Web Scrapper
 
 <img src="https://vignette.wikia.nocookie.net/southpark/images/b/b8/Lemmiwinks_%282%29.png/revision/latest?cb=20161218172346" width=110 height=150>
 

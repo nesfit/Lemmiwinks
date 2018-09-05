@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Info Tab</title>
+    <link href="index_files/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <table class="table my-4">
+        <thead class="table-dark">
+        <tr>
+            <th>
+                Type
+            </th>
+            <th>
+                Value
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for info_type, info_values in info.items() %}
+            {% for info_value in info_values %}
+                <tr>
+                    {% if loop.first %}
+                        <th rowspan="{{ info_values | length }}">{{ info_type }}</th>
+                    {% endif %}
+                    <td>
+                        {{ info_value }}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
